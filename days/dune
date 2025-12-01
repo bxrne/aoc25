@@ -1,0 +1,5 @@
+(library
+ (name days)
+ (modules days)
+ (libraries day01)
+ (modes native))

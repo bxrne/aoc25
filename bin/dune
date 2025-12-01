@@ -1,4 +1,5 @@
 (executable
- (public_name aoc25)
  (name main)
- (libraries aoc25))
+ (public_name aoc25)
+ (libraries aoc25)
+ (modes native))

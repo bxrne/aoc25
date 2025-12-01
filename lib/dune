@@ -1,2 +1,5 @@
 (library
- (name aoc25))
+ (name aoc25)
+ (modules aoc25)
+ (libraries str days)
+ (modes native))

@@ -1,0 +1,8 @@
+let read_input day : string =
+  let filename = Printf.sprintf "days/day%02d/input.txt" day in
+  In_channel.with_open_text filename In_channel.input_all
+
+let run_day day input =
+  match day with
+  | 1 -> Day01.Solution.part1 input, Day01.Solution.part2 input
+  | _ -> failwith "Day not implemented yet"
