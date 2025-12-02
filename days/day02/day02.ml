@@ -63,6 +63,36 @@ module Solution = struct
     |> List.fold_left (+) 0
     |> string_of_int
 
+  (** A value is invalid if it is a repeated sequence of a pattern of 2 chars or more **)
+  let is_invalid_sequence s =
+    let len = String.length s in
+    let rec check_pattern pattern_len = 
+      if pattern_len > len / 2 then false
+      else if len mod pattern_len <> 0 then
+        check_pattern (pattern_len + 1)
+      else
+        let pattern = String.sub s 0 pattern_len in
+        let rec check_repeats start =
+          if start >= len then true
+          else if String.sub s start pattern_len = pattern then
+            check_repeats (start + pattern_len)
+          else
+            false
+        in
+        if check_repeats 0 then true
+        else check_pattern (pattern_len + 1)
+    in
+    check_pattern 1 
+
+
   let part2 (input : string) : string =
     input
+    |> parse_input
+    |> parse_ranges
+    |> List.map range_to_list
+    |> List.flatten
+    |> List.filter (fun n -> is_invalid_sequence (string_of_int n))
+    |> List.fold_left (+) 0
+    |> string_of_int
+
 end
