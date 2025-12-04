@@ -49,6 +49,36 @@ module Solution = struct
     |> count_accessible
     |> string_of_int
 
-  let part2 _ = "tbi"
-end
+  let find_accessible (grid): (int * int) list =
+    let accessible = ref [] in
+    for y = 0 to height grid - 1 do
+      for x = 0 to width grid - 1 do
+        if is_accessible grid y x then
+          accessible := (y, x) :: !accessible
+      done
+    done;
+    !accessible 
 
+  let remove_roll grid y x:int =
+    let row = grid.(y) in
+    let new_row = String.mapi (fun i c -> if i = x then '.' else c) row in
+    grid.(y) <- new_row;
+    1
+
+  let part2 input =
+    let grid = parse input in
+    let removed = ref 0 in
+
+    let rec loop () =
+      let acc = find_accessible grid in
+      match acc with
+      | [] -> ()                    (* stop when no more accessible *)
+      | rolls ->
+          removed := !removed + List.length rolls;
+          List.iter (fun (y,x) -> ignore (remove_roll grid y x)) rolls;
+          loop ()
+    in
+    loop ();
+    string_of_int !removed
+
+end
