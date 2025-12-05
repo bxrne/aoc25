@@ -35,5 +35,33 @@ module Solution = struct
     string_of_int (List.length fresh_ingredients)
   ;;
 
-  let part2 (_input : string) : string = "tbi"
+  let merge_ranges (ranges : r list) : r list =
+    let sorted = List.sort (fun r1 r2 -> compare r1.s r2.s) ranges in
+    
+    let rec merge acc = function
+      | [] -> List.rev acc
+      | r :: rest ->
+          match acc with
+          | [] -> merge [r] rest
+          | last :: acc_rest ->
+              (* If current range overlaps or is adjacent to last *)
+              if r.s <= last.e + 1 then
+                (* Extend the last range *)
+                let merged = {s = last.s; e = max last.e r.e} in
+                merge (merged :: acc_rest) rest
+              else
+                (* No overlap, add new range *)
+                merge (r :: acc) rest
+    in
+    merge [] sorted
+  ;;
+
+  let part2 (input : string) : string = 
+    let lines = String.trim input |> String.split_on_char '\n' in 
+    let (ranges_str, _) = split_on_empty lines in 
+    let ranges = List.map range_from_str ranges_str in 
+    let merged = merge_ranges ranges in
+    let total = List.fold_left (fun acc r -> acc + (r.e - r.s + 1)) 0 merged in
+    string_of_int total
+  ;;
 end
