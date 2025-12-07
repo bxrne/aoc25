@@ -82,8 +82,60 @@ module Solution = struct
       string_of_int grand_total
   ;;
   
-  let part2 (_input: string): string =
-    ""
+  let part2 (input: string): string =
+    let lines = String.split_on_char '\n' input 
+                |> List.filter (fun s -> s <> "") in
+    
+    if lines = [] then "0"
+    else
+      (* Calculate column widths (max token length per position) *)
+      let get_col_widths line =
+        String.split_on_char ' ' line
+        |> List.filter (fun s -> s <> "")
+        |> List.map String.length
+      in
+      
+      let cols = List.fold_left (fun acc line ->
+        let widths = get_col_widths line in
+        if acc = [] then widths
+        else List.map2 max acc widths
+      ) [] lines in
+      
+      (* Initialize 2D array for accumulating digits *)
+      let nums = Array.of_list (List.map (fun w -> Array.make w 0) cols) in
+      
+      (* Process each line *)
+      let p2 = ref 0 in
+      List.iter (fun line ->
+        if line <> "" && (line.[0] = '+' || line.[0] = '*') then
+          (* Operator line - process each token *)
+          let tokens = String.split_on_char ' ' line 
+                      |> List.filter (fun s -> s <> "") in
+          List.iteri (fun i s ->
+            if i < Array.length nums then
+              match s with
+              | "+" -> p2 := !p2 + Array.fold_left (+) 0 nums.(i)
+              | "*" -> p2 := !p2 + Array.fold_left ( * ) 1 nums.(i)
+              | _ -> ()
+          ) tokens
+        else
+          (* Number line - build numbers digit by digit *)
+          let a = ref 0 in
+          let b = ref 0 in
+          String.iter (fun c ->
+            if c <> ' ' && c <> '\n' then (
+              let digit = int_of_char c - int_of_char '0' in
+              if !a < Array.length nums && !b < Array.length nums.(!a) then
+                nums.(!a).(!b) <- nums.(!a).(!b) * 10 + digit
+            );
+            incr b;
+            if !b > List.nth cols !a then (
+              b := 0;
+              incr a
+            )
+          ) line
+      ) lines;
+      
+      string_of_int !p2
   ;;
-
 end
