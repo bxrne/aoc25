@@ -90,5 +90,78 @@ module Solution = struct
     let result = List.fold_left ( * ) 1 top_three in
     string_of_int result
   
-  let part2 (_input:string) : string = "tbi"
-end
+let part2 (input:string) : string = 
+  let lines = String.split_on_char '\n' input |> List.filter (fun l -> l <> "") in 
+  let boxes = List.map read_line lines in 
+  let n = List.length boxes in
+  
+  (* Generate all pairs with their distances *)
+  let pairs = 
+    List.init n (fun i ->
+      List.init (n - i - 1) (fun j ->
+        let j' = i + j + 1 in
+        let dist = pythagorean (List.nth boxes i) (List.nth boxes j') in
+        (dist, i, j')
+      )
+    ) |> List.concat
+  in
+  
+  (* Sort pairs by distance (ascending) *)
+  let sorted_pairs = 
+    List.sort (fun (d1,_,_) (d2,_,_) -> compare d1 d2) pairs
+  in
+  
+  (* Union-Find data structure *)
+  let parent = Array.init n (fun i -> i) in
+  let rank = Array.make n 0 in
+  
+  (* Find with path compression *)
+  let rec find x =
+    if parent.(x) <> x then begin
+      parent.(x) <- find parent.(x);
+      parent.(x)
+    end else
+      x
+  in
+  
+  (* Union by rank, returns true if components were actually merged *)
+  let union x y =
+    let root_x = find x in
+    let root_y = find y in
+    if root_x = root_y then
+      false  (* Already in same component *)
+    else begin
+      (* Union by rank *)
+      if rank.(root_x) < rank.(root_y) then
+        parent.(root_x) <- root_y
+      else if rank.(root_x) > rank.(root_y) then
+        parent.(root_y) <- root_x
+      else begin
+        parent.(root_y) <- root_x;
+        rank.(root_x) <- rank.(root_x) + 1
+      end;
+      true  (* Components were merged *)
+    end
+  in
+  
+  (* Process pairs until all are connected *)
+  let num_components = ref n in
+  let last_connection = ref None in
+  
+  List.iter (fun (_dist, i, j) ->
+    if !num_components > 1 then begin
+      if union i j then begin
+        num_components := !num_components - 1;
+        if !num_components = 1 then
+          last_connection := Some (i, j)
+      end
+    end
+  ) sorted_pairs;
+  
+  (* Calculate result *)
+  match !last_connection with
+  | Some (i, j) ->
+      let box_i = List.nth boxes i in
+      let box_j = List.nth boxes j in
+      string_of_int (box_i.x * box_j.x)
+  | None -> "Error: No connection found"end
