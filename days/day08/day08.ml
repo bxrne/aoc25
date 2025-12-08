@@ -16,82 +16,78 @@ module Solution = struct
       z = int_of_string (List.nth parts 2);
     }
   
-  module UnionFind = struct
-    type t = {
-      parent: (int, int) Hashtbl.t;
-      rank: (int, int) Hashtbl.t;
-    }
-    
-    let create n =
-      let parent = Hashtbl.create n in
-      let rank = Hashtbl.create n in
-      for i = 0 to n - 1 do
-        Hashtbl.add parent i i;
-        Hashtbl.add rank i 0;
-      done;
-      { parent; rank }
-    
-    let rec find uf x =
-      let p = Hashtbl.find uf.parent x in
-      if p = x then x
+  (* Build adjacency list from connections *)
+  let build_graph n connections =
+    let graph = Array.make n [] in
+    List.iter (fun (i, j) ->
+      graph.(i) <- j :: graph.(i);
+      graph.(j) <- i :: graph.(j)
+    ) connections;
+    graph
+  
+  (* Find all nodes in a circuit using DFS *)
+  let find_circuit graph start visited =
+    let rec dfs node =
+      if visited.(node) then []
       else begin
-        let root = find uf p in
-        Hashtbl.replace uf.parent x root;
-        root
+        visited.(node) <- true;
+        node :: List.concat_map dfs graph.(node)
       end
-    
-    let union uf x y =
-      let rx = find uf x in
-      let ry = find uf y in
-      if rx <> ry then begin
-        let rank_x = Hashtbl.find uf.rank rx in
-        let rank_y = Hashtbl.find uf.rank ry in
-        if rank_x < rank_y then
-          Hashtbl.replace uf.parent rx ry
-        else if rank_x > rank_y then
-          Hashtbl.replace uf.parent ry rx
-        else begin
-          Hashtbl.replace uf.parent ry rx;
-          Hashtbl.replace uf.rank rx (rank_x + 1)
-        end
+    in
+    dfs start
+  
+  (* Find all circuits in the graph *)
+  let find_all_circuits graph =
+    let n = Array.length graph in
+    let visited = Array.make n false in
+    let circuits = ref [] in
+    for i = 0 to n - 1 do
+      if not visited.(i) then begin
+        let circuit = find_circuit graph i visited in
+        circuits := circuit :: !circuits
       end
-  end
+    done;
+    !circuits
   
   let part1 (input:string) : string = 
-    let lines = String.split_on_char '\n' input |> List.filter (fun l -> l <> "") in 
+    let lines = String.split_on_char '\n' input 
+                |> List.filter (fun l -> l <> "") in 
     let boxes = List.map read_line lines in 
     let n = List.length boxes in
     
-    let pairs = ref [] in
-    for i = 0 to n - 1 do
-      for j = i + 1 to n - 1 do
-        let b1 = List.nth boxes i in
-        let b2 = List.nth boxes j in
-        let dist = pythagorean b1 b2 in
-        pairs := (dist, i, j) :: !pairs
-      done
-    done;
+    (* Generate all pairs with their distances *)
+    let pairs = 
+      List.init n (fun i ->
+        List.init (n - i - 1) (fun j ->
+          let j' = i + j + 1 in
+          let dist = pythagorean (List.nth boxes i) (List.nth boxes j') in
+          (dist, i, j')
+        )
+      ) |> List.concat
+    in
     
-    let sorted_pairs = List.sort (fun (d1,_,_) (d2,_,_) -> compare d1 d2) !pairs in
+    (* Sort pairs by distance and take the 1000 shortest *)
+    let shortest_pairs = 
+      List.sort (fun (d1,_,_) (d2,_,_) -> compare d1 d2) pairs
+      |> List.filteri (fun idx _ -> idx < 1000)
+      |> List.map (fun (_dist, i, j) -> (i, j))
+    in
     
-    let uf = UnionFind.create n in
-    let connections = min 1000 (List.length sorted_pairs) in
-    List.iter (fun (_dist, i, j) ->
-      UnionFind.union uf i j
-    ) (List.filteri (fun idx _ -> idx < connections) sorted_pairs);
+    (* Build graph from connections *)
+    let graph = build_graph n shortest_pairs in
     
-    let circuits = Hashtbl.create n in
-    for i = 0 to n - 1 do
-      let root = UnionFind.find uf i in
-      let current = try Hashtbl.find circuits root with Not_found -> 0 in
-      Hashtbl.replace circuits root (current + 1)
-    done;
+    (* Find all circuits *)
+    let circuits = find_all_circuits graph in
     
-    let sizes = Hashtbl.fold (fun _ size acc -> size :: acc) circuits [] in
-    let sorted_sizes = List.sort (fun a b -> compare b a) sizes in
-    let three_largest = List.filteri (fun idx _ -> idx < 3) sorted_sizes in
+    (* Get sizes of three largest circuits *)
+    let circuit_sizes = List.map List.length circuits in
+    let top_three = 
+      List.sort (fun a b -> compare b a) circuit_sizes
+      |> List.filteri (fun idx _ -> idx < 3)
+    in
     
-    let result = List.fold_left ( * ) 1 three_largest in
+    (* Multiply the three largest *)
+    let result = List.fold_left ( * ) 1 top_three in
     string_of_int result
   
   let part2 (_input:string) : string = "tbi"
