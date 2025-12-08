@@ -1,0 +1,4 @@
+(library
+ (name day08)
+ (modules day08)
+ (modes native))

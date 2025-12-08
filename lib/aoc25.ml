@@ -11,4 +11,5 @@ let run_day day input =
   | 5 -> Day05.Solution.part1 input, Day05.Solution.part2 input
   | 6 -> Day06.Solution.part1 input, Day06.Solution.part2 input
   | 7 -> Day07.Solution.part1 input, Day07.Solution.part2 input
+  | 8 -> Day08.Solution.part1 input, Day08.Solution.part2 input
   | _ -> failwith "Day not implemented yet"
