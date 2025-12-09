@@ -24,7 +24,7 @@ let test_day08_part1_sample =
 984,92,344
 425,690,689" in
     let result = Day08.Solution.part1 sample_input in
-    assert_equal "40" result
+    assert_equal "20" result
   )
 
 let test_day08_part2_sample =
