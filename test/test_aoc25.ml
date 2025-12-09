@@ -8,6 +8,7 @@ module Test_day04 = Test_day04
 module Test_day05 = Test_day05
 module Test_day06 = Test_day06
 module Test_day07 = Test_day07
+module Test_day08 = Test_day08
 
 let () = 
   run_test_tt_main ("All Tests" >::: [
@@ -18,4 +19,5 @@ let () =
     Test_day05.suite;
     Test_day06.suite;
     Test_day07.suite;
+    Test_day08.suite;
   ])
