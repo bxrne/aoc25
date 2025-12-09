@@ -1,2 +1,4 @@
 (test
- (name test_aoc25))
+ (name test_aoc25)
+ (libraries aoc25 ounit2)
+ (modules test_aoc25 test_day01))
