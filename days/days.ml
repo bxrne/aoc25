@@ -7,3 +7,4 @@ module Day06 = Day06
 module Day07 = Day07
 module Day08 = Day08
 module Day09 = Day09
+module Day10 = Day10

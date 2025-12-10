@@ -7,3 +7,4 @@ module Day06 = Day06.Solution
 module Day07 = Day07.Solution
 module Day08 = Day08.Solution
 module Day09 = Day09.Solution
+module Day10 = Day10.Solution
