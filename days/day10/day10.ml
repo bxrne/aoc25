@@ -58,47 +58,45 @@ module Solution = struct
   (* Parse a single machine manual *)
   let parse_manual (machine_line: string) :manual = 
     let parts = String.split_on_char ' ' machine_line in
-      let lights = parse_lights (List.nth parts 0) in
-      let button_wirings = 
-        parts
-        |> List.tl
-        |> List.rev
-        |> List.tl  (* Remove last part which is joltages *)
-        |> List.rev
-        |> List.map parse_button_wiring
-      in
-      let joltages = parse_joltages (List.nth parts (List.length parts - 1)) in
-      { lights = lights; buttons = button_wirings; joltages = joltages }
+    let lights = parse_lights (List.nth parts 0) in
+    let button_wirings = parse_button_wirings (List.tl parts |> List.rev |> List.tl |> List.rev) in
+    let joltages = parse_joltages (List.nth parts (List.length parts - 1)) in
+    { lights = lights; buttons = button_wirings; joltages = joltages }
+  ;;
+
+  let parse_button_wirings (parts: string list) : button_wiring list =
+    parts |> List.map parse_button_wiring
+  ;;
+
+  (* Toggle lights based on wiring *)
+  let toggle_lights (lights: indicator list) (wiring: button_wiring) : indicator list =
+    List.mapi (fun idx light ->
+      if List.mem idx wiring.instructions then
+        match light with
+        | On -> Off
+        | Off -> On
+      else
+        light
+    ) lights
+  ;;
+
+  (* Compute button presses recursively *)
+  let rec compute_presses (current_lights: indicator list) (buttons: button_wiring list) (target_lights: indicator list) (press_count: int) : int =
+    if current_lights = target_lights then
+      press_count
+    else
+      match buttons with
+      | [] -> max_int  (* No more buttons to press, return a large number *)
+      | btn::rest ->
+          let press_with = compute_presses (toggle_lights current_lights btn) rest target_lights (press_count + 1) in
+          let press_without = compute_presses current_lights rest target_lights press_count in
+          min press_with press_without
   ;;
 
   (* Start machine presses buttons wrt wiring to get expected indicator status *)
   let count_start_prs (man: manual) : int =
-    (* Each machine starts with all lights off *)
-    (* Use indices (wiring numbers) to toggle resp. lights *)
-    (* Count the fewest button presses to get all the lights to match the indicator status *)
-    let toggle_lights (lights: indicator list) (wiring: button_wiring ) : indicator list =
-      List.mapi (fun idx light ->
-        if List.mem idx wiring.instructions then
-          match light with
-          | On -> Off
-          | Off -> On
-        else
-          light
-      ) lights
-    in
-    let rec aux (current_lights: indicator list) (buttons: button_wiring list) (press_count: int) : int =
-      if current_lights = man.lights then
-        press_count 
-      else 
-        match buttons with
-        | [] -> max_int  (* No more buttons to press, return a large number *)
-        | btn::rest ->
-            let toggled_lights = toggle_lights current_lights btn in
-            let press_with = aux toggled_lights rest (press_count + 1) in
-            let press_without = aux current_lights rest press_count in
-            min press_with press_without 
-    in 
-    aux (List.init (List.length man.lights) (fun _ -> Off )) man.buttons 0
+    let initial_lights = List.init (List.length man.lights) (fun _ -> Off) in
+    compute_presses initial_lights man.buttons man.lights 0
   ;;
 
   let part1 (input : string) : string = 
@@ -112,3 +110,4 @@ module Solution = struct
 
   let part2 (_input : string) : string = "tbi";;
 end
+
