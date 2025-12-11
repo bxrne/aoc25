@@ -59,7 +59,7 @@ module Solution = struct
   let parse_manual (machine_line: string) :manual = 
     let parts = String.split_on_char ' ' machine_line in
     let lights = parse_lights (List.nth parts 0) in
-    let button_wirings = parse_button_wirings (List.tl parts |> List.rev |> List.tl |> List.rev) in
+    let button_wirings = List.map parse_button_wiring (List.tl (List.rev (List.tl parts))) |> List.rev in 
     let joltages = parse_joltages (List.nth parts (List.length parts - 1)) in
     { lights = lights; buttons = button_wirings; joltages = joltages }
   ;;
